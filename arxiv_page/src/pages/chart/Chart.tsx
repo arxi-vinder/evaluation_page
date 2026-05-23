@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import '../dashboard/Dashboard.css';
 import { LineChart } from '@mui/x-charts/LineChart';
-import { BarChart } from '@mui/x-charts/BarChart';
 
 type ApiResponse = {
     user_id: number;
     k1: number;
+    k2: number;
     k3: number;
+    k4:number;
     k5: number;
 };
 
@@ -23,7 +24,9 @@ const getUserMetrics = (userId: number | null, data: ApiResponse[]) => {
 
     return [
         Number(user?.k1 ?? 0),
+        Number(user?.k2 ?? 0),
         Number(user?.k3 ?? 0),
+        Number(user?.k4 ?? 0),
         Number(user?.k5 ?? 0),
     ];
 };
@@ -42,9 +45,9 @@ const Chart = () => {
         const fetchAll = async () => {
         try {
         const [pRes, fRes, rRes] = await Promise.all([
-            fetch("http://localhost:8000/api/v1/evaluation/precision"),
-            fetch("http://localhost:8000/api/v1/evaluation/f1"),
-            fetch("http://localhost:8000/api/v1/evaluation/recall"),
+            fetch("https://arxivinder-b87fc3af616f.herokuapp.com/api/v1/evaluation/precision"),
+            fetch("https://arxivinder-b87fc3af616f.herokuapp.com/api/v1/evaluation/f1"),
+            fetch("https://arxivinder-b87fc3af616f.herokuapp.com/api/v1/evaluation/recall"),
         ]);
 
         const pData = normalizeArray(await pRes.json());
@@ -125,7 +128,7 @@ const recall = getUserMetrics(selectedUser, recallData);
                 height={500}
                 xAxis={[{
                     scaleType: 'point',
-                    data: ['K=1', 'K=3', 'K=5'],
+                    data: ['K=1','K=2','K=3', 'K=4','K=5'],
                     label: 'Top-K Recommendation',
                 }]}
                 yAxis={[{

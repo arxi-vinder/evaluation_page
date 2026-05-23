@@ -4,16 +4,21 @@ import './Testing.css';
 
 type ApiResponse = {
   user_id: number;
+  username:string;
   k1: number;
+  k2: number;
   k3: number;
+  k4: number;
   k5: number;
 };
 
 type User = {
   id: number;
-  name: string;
+  username: string;
   k1: number;
+  k2: number;
   k3: number;
+  k4: number;
   k5: number;
 };
 
@@ -34,9 +39,11 @@ const normalizeArray = (data: any): ApiResponse[] => {
 const mapData = (data: any): User[] =>
   normalizeArray(data).map((item: ApiResponse) => ({
     id: item.user_id,
-    name: `User ${item.user_id}`,
+    username: `User ${item.username}`,
     k1: item.k1 ?? 0,
+    k2: item.k2 ?? 0,
     k3: item.k3 ?? 0,
+    k4: item.k4 ?? 0,
     k5: item.k5 ?? 0
   }));
 
@@ -48,9 +55,9 @@ const EvaluationMetrics = () => {
     const fetchAll = async () => {
       try {
         const [f1Res, precisionRes, recallRes] = await Promise.all([
-          fetch("http://localhost:8000/api/v1/evaluation/f1"),
-          fetch("http://localhost:8000/api/v1/evaluation/precision"),
-          fetch("http://localhost:8000/api/v1/evaluation/recall")
+          fetch("https://arxivinder-b87fc3af616f.herokuapp.com/api/v1/evaluation/f1"),
+          fetch("https://arxivinder-b87fc3af616f.herokuapp.com/api/v1/evaluation/precision"),
+          fetch("https://arxivinder-b87fc3af616f.herokuapp.com/api/v1/evaluation/recall")
         ]);
 
         const f1 = await f1Res.json();
@@ -84,7 +91,9 @@ const EvaluationMetrics = () => {
           <tr>
             <th>Nama Pengguna</th>
             <th>K = 1</th>
+            <th>K = 2</th>
             <th>K = 3</th>
+            <th>K = 4</th>
             <th>K = 5</th>
           </tr>
         </thead>
@@ -98,10 +107,12 @@ const EvaluationMetrics = () => {
               <tr key={user.id}>
                 <td className="user-cell">
                   <div className="avatar"></div>
-                  {user.name}
+                  {user.username}
                 </td>
                 <td>{user.k1.toFixed(2)}</td>
+                <td>{user.k2.toFixed(2)}</td>
                 <td>{user.k3.toFixed(2)}</td>
+                <td>{user.k4.toFixed(2)}</td>
                 <td>{user.k5.toFixed(2)}</td>
               </tr>
             ))
