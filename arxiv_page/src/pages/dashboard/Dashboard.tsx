@@ -43,6 +43,20 @@ type Paper = {
   author: string;
 };
 
+type MetricsByK = {
+  k: number;
+  average_precision: number;
+  average_recall: number;
+  average_f1_score: number;
+  average_map: number;
+  count: number;
+};
+
+type AverageMetricsData = {
+  total_users: number;
+  metrics_by_k: MetricsByK[];
+};
+
 const EMPTY_FORM: PaperForm = {
   title: '',
   abstract: '',
@@ -69,6 +83,11 @@ const DashboardContent = () => {
     mean: 0, map1: 0, map3: 0, map5: 0, users: [],
   });
   const [loading, setLoading] = useState(true);
+  const [averageMetricsData, setAverageMetricsData] = useState<AverageMetricsData>({
+    total_users: 0,
+    metrics_by_k: [],
+  });
+  const [loadingMetrics, setLoadingMetrics] = useState(true);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState<PaperForm>(EMPTY_FORM);
@@ -111,6 +130,23 @@ const DashboardContent = () => {
       }
     };
     fetchMap();
+  }, []);
+
+  useEffect(() => {
+    const fetchAverageMetrics = async () => {
+      try {
+        const res = await fetch("https://arxivinder-b87fc3af616f.herokuapp.com/api/v1/evaluation/average-metrics-by-k");
+        const data = await res.json();
+        if (data.metrics_by_k) {
+          setAverageMetricsData(data);
+        }
+      } catch (err) {
+        console.error("Fetch average metrics error:", err);
+      } finally {
+        setLoadingMetrics(false);
+      }
+    };
+    fetchAverageMetrics();
   }, []);
 
   const openModal = () => {
@@ -391,6 +427,46 @@ const DashboardContent = () => {
             )}
           </tbody>
         </table>
+      </div>
+
+      <div className="table-section">
+        <h3 className="table-title">System Evaluation Metrics by K</h3>
+        <div className="average-metrics-summary">
+          <div className="metric-summary-card">
+            <p>Total User Evaluation</p>
+            <h3>{averageMetricsData.total_users}</h3>
+          </div>
+        </div>
+        {loadingMetrics && <p>Loading metrics data...</p>}
+        {averageMetricsData.metrics_by_k.length === 0 && !loadingMetrics && (
+          <p style={{ textAlign: "center", padding: "20px" }}>No metrics data available</p>
+        )}
+        {averageMetricsData.metrics_by_k.length > 0 && (
+          <table className="custom-table">
+            <thead>
+              <tr>
+                <th>K</th>
+                <th>Average Precision</th>
+                <th>Average Recall</th>
+                <th>Average F1 Score</th>
+                <th>Average MAP</th>
+                <th>Count</th>
+              </tr>
+            </thead>
+            <tbody>
+              {averageMetricsData.metrics_by_k.map((metric) => (
+                <tr key={metric.k}>
+                  <td>{metric.k}</td>
+                  <td>{metric.average_precision.toFixed(4)}</td>
+                  <td>{metric.average_recall.toFixed(4)}</td>
+                  <td>{metric.average_f1_score.toFixed(4)}</td>
+                  <td>{metric.average_map.toFixed(4)}</td>
+                  <td>{metric.count}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
 
       {modalOpen && (
