@@ -101,7 +101,7 @@ const DashboardContent = () => {
   useEffect(() => {
     const fetchMap = async () => {
       try {
-        const res = await fetch("http://localhost:8000/api/v1/evaluation/mape");
+        const res = await fetch("https://arxivinder-b87fc3af616f.herokuapp.com/api/v1/evaluation/mape");
         const data = await res.json();
         setMapDataState(mapMAPData(data));
       } catch (err) {
@@ -145,7 +145,7 @@ const DashboardContent = () => {
     };
 
     try {
-      const res = await fetch("http://localhost:8000/api/v1/create/paper", {
+      const res = await fetch("https://arxivinder-b87fc3af616f.herokuapp.com/api/v1/create/paper", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
@@ -175,7 +175,7 @@ const DashboardContent = () => {
     setLoadingPapers(true);
     setPapersError(null);
     try {
-      const res = await fetch("http://localhost:8000/api/v1/papers");
+      const res = await fetch("https://arxivinder-b87fc3af616f.herokuapp.com/api/v1/papers");
       const json = await res.json();
       if (json.status === "success") {
         setPapers(json.data ?? []);
@@ -203,7 +203,7 @@ const DashboardContent = () => {
     setDeleting(true);
     setDeleteError(null);
     try {
-      const res = await fetch(`http://localhost:8000/api/v1/delete/paper/${selectedPaper.id}`, {
+      const res = await fetch(`https://arxivinder-b87fc3af616f.herokuapp.com/api/v1/delete/paper/${selectedPaper.id}`, {
         method: "DELETE",
       });
       const json = await res.json();
@@ -230,7 +230,7 @@ const DashboardContent = () => {
     setLoadingUpdatePapers(true);
     setUpdatePapersError(null);
     try {
-      const res = await fetch("http://localhost:8000/api/v1/papers");
+      const res = await fetch("https://arxivinder-b87fc3af616f.herokuapp.com/api/v1/papers");
       const json = await res.json();
       if (json.status === "success") {
         setUpdatePaperList(json.data ?? []);
@@ -271,7 +271,7 @@ const DashboardContent = () => {
     if (updateForm.author) body.author = updateForm.author;
 
     try {
-      const res = await fetch(`http://localhost:8000/api/v1/update/paper/${selectedUpdatePaper.id}`, {
+      const res = await fetch(`https://arxivinder-b87fc3af616f.herokuapp.com/api/v1/update/paper/${selectedUpdatePaper.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
@@ -348,7 +348,9 @@ const DashboardContent = () => {
           <thead>
             <tr>
               <th>MAP@1</th>
+              <th>MAP@2</th>
               <th>MAP@3</th>
+              <th>MAP@4</th>
               <th>MAP@5</th>
             </tr>
           </thead>
