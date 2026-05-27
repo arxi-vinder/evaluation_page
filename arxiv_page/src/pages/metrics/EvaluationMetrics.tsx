@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { BarChart } from '@mui/x-charts/BarChart';
 import '../dashboard/Dashboard.css';
 import './Testing.css';
 
@@ -68,6 +69,8 @@ const mapData = (data: any): User[] =>
 const EvaluationMetrics = () => {
   const [data, setData] = useState<MetricData>({ f1: [], precision: [], recall: [] });
   const [loading, setLoading] = useState(true);
+  const [selectedMetric, setSelectedMetric] = useState<'f1' | 'precision' | 'recall'>('f1');
+  const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1024);
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -84,7 +87,7 @@ const EvaluationMetrics = () => {
         const recall = await recallRes.json();
         const mape = await mapeRes.json();
 
-        
+
         console.log("F1:", f1);
         console.log("Precision:", precision);
         console.log("Recall:", recall);
@@ -104,6 +107,15 @@ const EvaluationMetrics = () => {
     };
 
     fetchAll();
+  }, []);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   const renderTable = (title: string, users: User[]) => (
@@ -207,6 +219,111 @@ const EvaluationMetrics = () => {
     </div>
   );
 
+  const renderChart = (users: User[], metricName: string) => {
+    if (users.length === 0) return null;
+
+    const chartData = users.map((user) => ({
+      username: user.username.replace('User ', ''),
+      k1: Math.round(user.k1 * 10000) / 10000,
+      k2: Math.round(user.k2 * 10000) / 10000,
+      k3: Math.round(user.k3 * 10000) / 10000,
+      k4: Math.round(user.k4 * 10000) / 10000,
+      k5: Math.round(user.k5 * 10000) / 10000,
+    }));
+
+    const chartWidth = windowWidth < 768 ? Math.min(windowWidth - 40, 500) : Math.min(windowWidth - 100, 1000);
+    const chartHeight = windowWidth < 768 ? 300 : 380;
+
+    return (
+      <div className="table-section">
+        <h3 className="table-title">{metricName} - Per User (K=1-5)</h3>
+        <div className="chart-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'flex-start', overflowX: 'auto', width: '100%' }}>
+          <BarChart
+            dataset={chartData}
+            xAxis={[{ scaleType: 'band', dataKey: 'username' }]}
+            series={[
+              { dataKey: 'k1', label: 'K=1' },
+              { dataKey: 'k2', label: 'K=2' },
+              { dataKey: 'k3', label: 'K=3' },
+              { dataKey: 'k4', label: 'K=4' },
+              { dataKey: 'k5', label: 'K=5' }
+            ]}
+            width={chartWidth}
+            height={chartHeight}
+            margin={{ top: 10, bottom: 30, left: 40, right: 20 }}
+          />
+        </div>
+      </div>
+    );
+  };
+
+  const renderHistogram = (users: User[], metricName: string) => {
+    const HISTOGRAM_USER_IDS = [19, 41, 42,46, 29];
+    const filteredUsers = users.filter((u) => HISTOGRAM_USER_IDS.includes(u.id));
+
+    if (filteredUsers.length === 0) return null;
+
+    const bins = [
+      { range: '0.0-0.1', min: 0.0, max: 0.1 },
+      { range: '0.1-0.2', min: 0.1, max: 0.2 },
+      { range: '0.2-0.3', min: 0.2, max: 0.3 },
+      { range: '0.3-0.4', min: 0.3, max: 0.4 },
+      { range: '0.4-0.5', min: 0.4, max: 0.5 },
+      { range: '0.5-0.6', min: 0.5, max: 0.6 },
+      { range: '0.6-0.7', min: 0.6, max: 0.7 },
+      { range: '0.7-0.8', min: 0.7, max: 0.8 },
+      { range: '0.8-0.9', min: 0.8, max: 0.9 },
+      { range: '0.9-1.0', min: 0.9, max: 1.01 },
+    ];
+
+    const countInBin = (value: number, min: number, max: number) =>
+      value >= min && value < max ? 1 : 0;
+
+    const histogramData = bins.map((bin) => {
+      const counts = { k1: 0, k2: 0, k3: 0, k4: 0, k5: 0 };
+      filteredUsers.forEach((user) => {
+        counts.k1 += countInBin(user.k1, bin.min, bin.max);
+        counts.k2 += countInBin(user.k2, bin.min, bin.max);
+        counts.k3 += countInBin(user.k3, bin.min, bin.max);
+        counts.k4 += countInBin(user.k4, bin.min, bin.max);
+        counts.k5 += countInBin(user.k5, bin.min, bin.max);
+      });
+      return {
+        range: bin.range,
+        ...counts,
+      };
+    });
+
+    const chartWidth = windowWidth < 768 ? Math.min(windowWidth - 40, 500) : Math.min(windowWidth - 100, 1000);
+    const chartHeight = windowWidth < 768 ? 300 : 380;
+
+    return (
+      <div className="table-section">
+        <h3 className="table-title">{metricName} - Distribution Histogram</h3>
+        <p style={{ marginTop: '-8px', marginBottom: '16px', fontSize: '13px', color: '#64748b' }}>
+          Jumlah user pada setiap rentang nilai metrik (per K)
+        </p>
+        <div className="chart-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'flex-start', overflowX: 'auto', width: '100%' }}>
+          <BarChart
+            dataset={histogramData}
+            xAxis={[{ scaleType: 'band', dataKey: 'range', label: 'Rentang Nilai' }]}
+            yAxis={[{ label: 'Jumlah User' }]}
+            series={[
+              { dataKey: 'k1', label: 'K=1' },
+              { dataKey: 'k2', label: 'K=2' },
+              { dataKey: 'k3', label: 'K=3' },
+              { dataKey: 'k4', label: 'K=4' },
+              { dataKey: 'k5', label: 'K=5' }
+            ]}
+            width={chartWidth}
+            height={chartHeight}
+            margin={{ top: 10, bottom: 50, left: 50, right: 20 }}
+          />
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="dashboard-container">
       <h2 className="dashboard-title">Evaluation Metrics</h2>
@@ -217,6 +334,72 @@ const EvaluationMetrics = () => {
         <>
           {renderMAPESummary(data.mape)}
           {renderMAPETable(data.mape)}
+        </>
+      )}
+
+      <div className="table-section">
+        <h3 className="table-title">View by Metric</h3>
+        <div style={{ display: 'flex', gap: '12px', marginBottom: '24px', flexWrap: 'wrap' }}>
+          <button
+            onClick={() => setSelectedMetric('f1')}
+            style={{
+              padding: '10px 20px',
+              backgroundColor: selectedMetric === 'f1' ? '#4e7eff' : '#f1f5f9',
+              color: selectedMetric === 'f1' ? '#ffffff' : '#64748b',
+              border: selectedMetric === 'f1' ? 'none' : '1px solid #e2e8f0',
+              borderRadius: '10px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: '600',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            F1 Score
+          </button>
+          <button
+            onClick={() => setSelectedMetric('precision')}
+            style={{
+              padding: '10px 20px',
+              backgroundColor: selectedMetric === 'precision' ? '#4e7eff' : '#f1f5f9',
+              color: selectedMetric === 'precision' ? '#ffffff' : '#64748b',
+              border: selectedMetric === 'precision' ? 'none' : '1px solid #e2e8f0',
+              borderRadius: '10px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: '600',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            Precision
+          </button>
+          <button
+            onClick={() => setSelectedMetric('recall')}
+            style={{
+              padding: '10px 20px',
+              backgroundColor: selectedMetric === 'recall' ? '#4e7eff' : '#f1f5f9',
+              color: selectedMetric === 'recall' ? '#ffffff' : '#64748b',
+              border: selectedMetric === 'recall' ? 'none' : '1px solid #e2e8f0',
+              borderRadius: '10px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: '600',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            Recall
+          </button>
+        </div>
+      </div>
+
+      {!loading && (
+        <>
+          {selectedMetric === 'f1' && renderChart(data.f1, 'F1 Score')}
+          {selectedMetric === 'precision' && renderChart(data.precision, 'Precision')}
+          {selectedMetric === 'recall' && renderChart(data.recall, 'Recall')}
+
+          {selectedMetric === 'f1' && renderHistogram(data.f1, 'F1 Score')}
+          {selectedMetric === 'precision' && renderHistogram(data.precision, 'Precision')}
+          {selectedMetric === 'recall' && renderHistogram(data.recall, 'Recall')}
         </>
       )}
 
